@@ -1,0 +1,64 @@
+gate_detector_node:
+  ros__parameters:
+    # HSV RANGES - Tuned for Gazebo
+    red_lower1: [0, 100, 100]
+    red_upper1: [10, 255, 255]
+    red_lower2: [170, 100, 100]
+    red_upper2: [180, 255, 255]
+    
+    green_lower: [40, 100, 100]
+    green_upper: [80, 255, 255]
+    
+    orange_lower: [10, 120, 120]
+    orange_upper: [25, 255, 255]
+    
+    min_area_strict: 300
+    min_area_relaxed: 80
+    aspect_threshold: 0.8
+    gate_width_meters: 1.5
+    
+    publish_debug: true
+
+gate_navigator_node:
+  ros__parameters:
+    # --- DEPTH SAFETY SETTINGS ---
+    # Pool Floor: -1.6m
+    # Old Target: -1.7m (CRASH RISK)
+    # New Target: -1.0m (Safe middle water column)
+    target_depth: -1.0
+    
+    # Depth Control Tuning
+    # Reduced gains to prevent "diving" overshoot
+    depth_correction_gain: 0.8  
+    depth_deadband: 0.15        # Don't react to small errors
+    
+    # --- NAVIGATION SPEEDS ---
+    search_forward_speed: 0.4
+    search_rotation_speed: 0.15
+    
+    # Approach (Far -> 3m)
+    approach_start_distance: 8.0
+    approach_stop_distance: 3.0
+    approach_speed: 0.5
+    approach_yaw_gain: 0.8
+    
+    # Alignment (at 3m)
+    alignment_distance: 3.0
+    alignment_threshold: 0.08
+    alignment_max_time: 20.0
+    alignment_yaw_gain: 2.5
+    
+    # Final Approach (3m -> 1.2m)
+    final_approach_start: 3.0
+    final_approach_speed: 0.4
+    final_approach_threshold: 0.15
+    
+    # Passing
+    passing_trigger_distance: 1.2
+    passing_speed: 1.0  # Reduced slightly to maintain control
+    gate_width: 1.5
+    
+    # Flare Avoidance
+    flare_critical_distance: 2.5
+    flare_lateral_speed: 0.4
+    flare_forward_speed: 0.3

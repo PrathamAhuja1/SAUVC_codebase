@@ -1,0 +1,832 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="sauvc_pool">
+    
+    <scene>
+      <ambient>0.0 0.4 0.6</ambient>
+      <background>0.0 0.3 0.5</background>
+    </scene>
+    
+    <physics name="default" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+      <gravity>0 0 -9.81</gravity>
+    </physics>
+
+    <plugin name='ignition::gazebo::systems::Physics' filename='ignition-gazebo-physics-system'/>
+    <plugin name='ignition::gazebo::systems::UserCommands' filename='ignition-gazebo-user-commands-system'/>
+    <plugin name='ignition::gazebo::systems::SceneBroadcaster' filename='ignition-gazebo-scene-broadcaster-system'/>
+    <plugin filename="ignition-gazebo-sensors-system" name="ignition::gazebo::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="ignition-gazebo-contact-system" name="ignition::gazebo::systems::Contact"/>
+    <plugin filename="ignition-gazebo-buoyancy-system" name="ignition::gazebo::systems::Buoyancy">
+      <uniform_fluid_density>1000</uniform_fluid_density>
+    </plugin>
+    
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <light type="point" name="underwater_light_1">
+      <pose>0 0 -0.8 0 0 0</pose>
+      <diffuse>0.4 0.5 0.6 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <attenuation>
+        <range>20</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+    </light>
+
+    <model name="sky_cam">
+      <static>true</static>
+      <link name="camera_link">
+        <pose>0 0 10 1.57 1.57 0</pose>
+        <sensor name="sky_cam" type="camera">
+          <camera>
+            <horizontal_fov>1.047</horizontal_fov>
+            <image>
+              <width>1024</width>
+              <height>768</height>
+            </image>
+            <clip>
+              <near>0.1</near>
+              <far>100</far>
+            </clip>
+          </camera>
+          <always_on>1</always_on>
+          <update_rate>1</update_rate>
+          <visualize>true</visualize>
+          <topic>sky_cam</topic>
+        </sensor>
+      </link>
+    </model>
+
+    <!-- ========================================================================== -->
+    <!-- CORRECTED POOL - 25m x 16m (per SAUVC rules and provided map)             -->
+    <!-- Pool depth: 1.6m (per side view images)                                    -->
+    <!-- ========================================================================== -->
+    <model name="pool">
+      <static>true</static>
+      <link name="pool_link">
+        
+        <!-- Floor: 25m (X) x 16m (Y) -->
+        <collision name="floor_collision">
+          <pose>0 0 -1.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>25 16 0.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="floor_visual">
+          <pose>0 0 -1.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>25 16 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.2 0.4 0.6 1</ambient>
+            <diffuse>0.2 0.4 0.6 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+        </visual>
+
+        <!-- Wall 1 (Top) - Y=+8m -->
+        <collision name="wall1_collision">
+          <pose>0 8.05 -0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>25 0.1 1.7</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall1_visual">
+          <pose>0 8.05 -0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>25 0.1 1.7</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.3 0.5 0.7 0.8</ambient>
+            <diffuse>0.3 0.5 0.7 0.8</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+          </material>
+        </visual>
+
+        <!-- Wall 2 (Bottom) - Y=-8m -->
+        <collision name="wall2_collision">
+          <pose>0 -8.05 -0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>25 0.1 1.7</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall2_visual">
+          <pose>0 -8.05 -0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>25 0.1 1.7</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.3 0.5 0.7 0.8</ambient>
+            <diffuse>0.3 0.5 0.7 0.8</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+          </material>
+        </visual>
+
+        <!-- Wall 3 (Right) - X=+12.5m -->
+        <collision name="wall3_collision">
+          <pose>12.55 0 -0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 16 1.7</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall3_visual">
+          <pose>12.55 0 -0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 16 1.7</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.3 0.5 0.7 0.8</ambient>
+            <diffuse>0.3 0.5 0.7 0.8</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+          </material>
+        </visual>
+
+        <!-- Wall 4 (Left) - X=-12.5m -->
+        <collision name="wall4_collision">
+          <pose>-12.55 0 -0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 16 1.7</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall4_visual">
+          <pose>-12.55 0 -0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.1 16 1.7</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.3 0.5 0.7 0.8</ambient>
+            <diffuse>0.3 0.5 0.7 0.8</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+          </material>
+        </visual>
+
+        <!-- Water surface -->
+        <visual name="water_surface">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>25 16 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.3 0.5 0.7 0.3</ambient>
+            <diffuse>0.3 0.5 0.7 0.3</diffuse>
+            <specular>0.5 0.5 0.5 0.3</specular>
+          </material>
+        </visual>
+
+      </link>
+    </model>
+
+    <!-- ========================================================================== -->
+    <!-- Starting Zone - 140cm x 140cm at left side (~10-11m from gate)            -->
+    <!-- Based on map: approximately X=-10m                                         -->
+    <!-- ========================================================================== -->
+    <model name="starting_zone">
+      <static>true</static>
+      <pose>-10 0 0.01 0 0 0</pose>
+      <link name="starting_zone_link">
+        <visual name="starting_zone_visual">
+          <geometry>
+            <box>
+              <size>1.4 1.4 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 1 0 0.8</ambient>
+            <diffuse>1 1 0 0.8</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ========================================================================== -->
+    <!-- 150cm wide x 150cm tall                                                    -->
+    <!-- Posts separated in Y-axis (left-right)                                     -->
+    <!-- ========================================================================== -->
+    <model name="navigation_gate">
+      <static>true</static>
+      <pose>8 0 -0.8 0 0 0</pose>
+      <link name="gate_link">
+        
+        <!-- LEFT POST (RED - PORT SIDE) -->
+        <collision name="left_post_collision">
+          <pose>0 -0.75 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.06 0.06 1.5</size>
+            </box>
+          </geometry>
+        </collision>
+        
+        <!-- RED STRIPE 1 (bottom) - 25cm x 25cm -->
+        <visual name="left_red_1">
+          <pose>0 -0.75 -0.625 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.0 0.0 1</ambient>
+            <diffuse>1.0 0.0 0.0 1</diffuse>
+            <specular>1.0 1.0 1.0 1</specular>
+            <emissive>0.9 0.0 0.0 1</emissive>
+          </material>
+        </visual>
+        
+        <visual name="left_black_1">
+          <pose>0 -0.75 -0.375 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.02 0.02 0.02 1</ambient>
+            <diffuse>0.02 0.02 0.02 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+        </visual>
+        
+        <visual name="left_red_2">
+          <pose>0 -0.75 -0.125 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.0 0.0 1</ambient>
+            <diffuse>1.0 0.0 0.0 1</diffuse>
+            <specular>1.0 1.0 1.0 1</specular>
+            <emissive>0.9 0.0 0.0 1</emissive>
+          </material>
+        </visual>
+        
+        <visual name="left_black_2">
+          <pose>0 -0.75 0.125 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.02 0.02 0.02 1</ambient>
+            <diffuse>0.02 0.02 0.02 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+        </visual>
+        
+        <visual name="left_red_3">
+          <pose>0 -0.75 0.375 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.0 0.0 1</ambient>
+            <diffuse>1.0 0.0 0.0 1</diffuse>
+            <specular>1.0 1.0 1.0 1</specular>
+            <emissive>0.9 0.0 0.0 1</emissive>
+          </material>
+        </visual>
+        
+        <visual name="left_black_3">
+          <pose>0 -0.75 0.625 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.02 0.02 0.02 1</ambient>
+            <diffuse>0.02 0.02 0.02 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+        </visual>
+
+        <!-- RIGHT POST (GREEN - STARBOARD SIDE) -->
+        <collision name="right_post_collision">
+          <pose>0 0.75 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.06 0.06 1.5</size>
+            </box>
+          </geometry>
+        </collision>
+        
+        <visual name="right_green_1">
+          <pose>0 0.75 -0.625 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.0 1.0 0.0 1</ambient>
+            <diffuse>0.0 1.0 0.0 1</diffuse>
+            <specular>1.0 1.0 1.0 1</specular>
+            <emissive>0.0 0.9 0.0 1</emissive>
+          </material>
+        </visual>
+        
+        <visual name="right_black_1">
+          <pose>0 0.75 -0.375 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.02 0.02 0.02 1</ambient>
+            <diffuse>0.02 0.02 0.02 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+        </visual>
+        
+        <visual name="right_green_2">
+          <pose>0 0.75 -0.125 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.0 1.0 0.0 1</ambient>
+            <diffuse>0.0 1.0 0.0 1</diffuse>
+            <specular>1.0 1.0 1.0 1</specular>
+            <emissive>0.0 0.9 0.0 1</emissive>
+          </material>
+        </visual>
+        
+        <visual name="right_black_2">
+          <pose>0 0.75 0.125 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.02 0.02 0.02 1</ambient>
+            <diffuse>0.02 0.02 0.02 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+        </visual>
+        
+        <visual name="right_green_3">
+          <pose>0 0.75 0.375 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.0 1.0 0.0 1</ambient>
+            <diffuse>0.0 1.0 0.0 1</diffuse>
+            <specular>1.0 1.0 1.0 1</specular>
+            <emissive>0.0 0.9 0.0 1</emissive>
+          </material>
+        </visual>
+        
+        <visual name="right_black_3">
+          <pose>0 0.75 0.625 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.25</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.02 0.02 0.02 1</ambient>
+            <diffuse>0.02 0.02 0.02 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+        </visual>
+
+        <!-- TOP BAR (BLACK) -->
+        <collision name="top_bar_collision">
+          <pose>0 0 0.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.06 1.5 0.06</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="top_bar_visual">
+          <pose>0 0 0.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.06 1.5 0.06</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.02 0.02 0.02 1</ambient>
+            <diffuse>0.02 0.02 0.02 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+        </visual>
+
+      </link>
+    </model>
+
+    <!-- ========================================================================== -->
+    <!-- ORANGE FLARE - Obstacle (before gate, in blue zone on map)                -->
+    <!-- Height: 150cm tall, ~15cm diameter (much larger than communication flares)-->
+    <!-- ========================================================================== -->
+    <model name="orange_flare">
+      <static>true</static>
+      <pose>-6 2.5 -0.85 0 0 0</pose>
+      <link name="flare_link">
+        <collision name="flare_collision">
+          <geometry>
+            <cylinder>
+              <radius>0.075</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="flare_visual">
+          <geometry>
+            <cylinder>
+              <radius>0.075</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1.0 0.5 0.0 1</ambient>
+            <diffuse>1.0 0.5 0.0 1</diffuse>
+            <specular>1.0 0.8 0.4 1</specular>
+            <emissive>1.0 0.5 0.0 1</emissive>
+          </material>
+        </visual>
+        
+        <visual name="flare_cap">
+          <pose>0 0 0.75 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.10</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <ambient>1.0 0.4 0.0 1</ambient>
+            <diffuse>1.0 0.4 0.0 1</diffuse>
+            <specular>1.0 0.7 0.3 1</specular>
+            <emissive>1.0 0.5 0.0 1</emissive>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ========================================================================== -->
+    <!-- COMMUNICATION FLARES (Red, Yellow, Blue)                                  -->
+    <!-- Located in middle "yellow zone" area per map (X = 0 to 6m approximately)  -->
+    <!-- Specifications per images:                                                 -->
+    <!--   - Height: 80cm (0.8m)                                                   -->
+    <!--   - Diameter: ~1.6cm (radius = 0.008m)                                    -->
+    <!--   - Golf ball on top: 2.1cm radius (0.021m)                               -->
+    <!--   - Pool depth: 1.6m, floor at Z=-1.6m                                    -->
+    <!--   - Flare bottom at floor, center at Z = -1.6 + 0.4 = -1.2m              -->
+    <!--   - Golf ball center at Z = -1.6 + 0.8 + 0.021 = -0.779m                 -->
+    <!-- ========================================================================== -->
+
+    <!-- RED FLARE - Left side of yellow zone -->
+    <model name="red_flare">
+      <static>true</static>
+      <pose>1 -2 -1.2 0 0 0</pose>
+      <link name="flare_link">
+        <collision name="flare_collision">
+          <geometry>
+            <cylinder>
+              <radius>0.008</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="flare_visual">
+          <geometry>
+            <cylinder>
+              <radius>0.008</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 0 0 1</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.5 0.5 0.5 1</specular>
+            <emissive>0.8 0 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- YELLOW FLARE - Center of yellow zone -->
+    <model name="yellow_flare">
+      <static>true</static>
+      <pose>3 0 -1.2 0 0 0</pose>
+      <link name="flare_link">
+        <collision name="flare_collision">
+          <geometry>
+            <cylinder>
+              <radius>0.008</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="flare_visual">
+          <geometry>
+            <cylinder>
+              <radius>0.008</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+            <specular>0.5 0.5 0.5 1</specular>
+            <emissive>0.8 0.8 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- BLUE FLARE - Right side of yellow zone -->
+    <model name="blue_flare">
+      <static>true</static>
+      <pose>5 2 -1.2 0 0 0</pose>
+      <link name="flare_link">
+        <collision name="flare_collision">
+          <geometry>
+            <cylinder>
+              <radius>0.008</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="flare_visual">
+          <geometry>
+            <cylinder>
+              <radius>0.008</radius>
+              <length>0.8</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0 0 1 1</ambient>
+            <diffuse>0 0 1 1</diffuse>
+            <specular>0.5 0.5 0.5 1</specular>
+            <emissive>0 0 0.8 1</emissive>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- GOLF BALLS - White, positioned on top of flares -->
+    <!-- Golf ball center = flare_z + 0.4 (half flare) + 0.021 (golf ball radius) -->
+    <model name="golf_ball_red">
+      <static>true</static>
+      <pose>1 -2 -0.779 0 0 0</pose>
+      <link name="ball_link">
+        <collision name="ball_collision">
+          <geometry>
+            <sphere>
+              <radius>0.021</radius>
+            </sphere>
+          </geometry>
+        </collision>
+        <visual name="ball_visual">
+          <geometry>
+            <sphere>
+              <radius>0.021</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0.8 0.8 0.8 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="golf_ball_yellow">
+      <static>true</static>
+      <pose>3 0 -0.779 0 0 0</pose>
+      <link name="ball_link">
+        <collision name="ball_collision">
+          <geometry>
+            <sphere>
+              <radius>0.021</radius>
+            </sphere>
+          </geometry>
+        </collision>
+        <visual name="ball_visual">
+          <geometry>
+            <sphere>
+              <radius>0.021</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0.8 0.8 0.8 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="golf_ball_blue">
+      <static>true</static>
+      <pose>5 2 -0.779 0 0 0</pose>
+      <link name="ball_link">
+        <collision name="ball_collision">
+          <geometry>
+            <sphere>
+              <radius>0.021</radius>
+            </sphere>
+          </geometry>
+        </collision>
+        <visual name="ball_visual">
+          <geometry>
+            <sphere>
+              <radius>0.021</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0.8 0.8 0.8 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ========================================================================== -->
+    <!-- TARGET ZONE DRUMS (on right side of pool, per map)                        -->
+    <!-- Blue drum near top-right, Red drums along right edge                       -->
+    <!-- Positioned at approximately X=10-11m, Y varies                             -->
+    <!-- ========================================================================== -->
+    
+    <!-- Blue Drum -->
+    <model name="blue_drum">
+      <static>true</static>
+      <pose>10 6 -1.1 0 0 0</pose>
+      <link name="drum_link">
+        <collision name="drum_collision">
+          <geometry>
+            <cylinder>
+              <radius>0.15</radius>
+              <length>0.4</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="drum_visual">
+          <geometry>
+            <cylinder>
+              <radius>0.15</radius>
+              <length>0.4</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0 0 1 1</ambient>
+            <diffuse>0 0 1 1</diffuse>
+            <specular>0.3 0.3 0.3 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Red Drums (3 along right edge) -->
+    <model name="red_drum_1">
+      <static>true</static>
+      <pose>10 2 -1.1 0 0 0</pose>
+      <link name="drum_link">
+        <collision name="drum_collision">
+          <geometry>
+            <cylinder>
+              <radius>0.15</radius>
+              <length>0.4</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="drum_visual">
+          <geometry>
+            <cylinder>
+              <radius>0.15</radius>
+              <length>0.4</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 0 0 1</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.3 0.3 0.3 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="red_drum_2">
+      <static>true</static>
+      <pose>10 0 -1.1 0 0 0</pose>
+      <link name="drum_link">
+        <collision name="drum_collision">
+          <geometry>
+            <cylinder>
+              <radius>0.15</radius>
+              <length>0.4</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="drum_visual">
+          <geometry>
+            <cylinder>
+              <radius>0.15</radius>
+              <length>0.4</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 0 0 1</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.3 0.3 0.3 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="red_drum_3">
+      <static>true</static>
+      <pose>10 -2 -1.1 0 0 0</pose>
+      <link name="drum_link">
+        <collision name="drum_collision">
+          <geometry>
+            <cylinder>
+              <radius>0.15</radius>
+              <length>0.4</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="drum_visual">
+          <geometry>
+            <cylinder>
+              <radius>0.15</radius>
+              <length>0.4</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 0 0 1</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.3 0.3 0.3 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ========================================================================== -->
+    <!-- AUV SPAWN - At starting zone (~10m from gate)                             -->
+    <!-- Position: X=-10m, Y=0m, Z=-0.8m (0.8m below surface for 1.6m pool)       -->
+    <!-- ========================================================================== -->
+    <include>
+      <uri>model://auv_slam/models/orca4_ign</uri>
+      <pose>-10 0 -0.8 0 0 0</pose>
+    </include>
+
+  </world>
+</sdf>
