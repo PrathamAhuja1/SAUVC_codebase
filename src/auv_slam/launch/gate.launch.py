@@ -58,7 +58,7 @@ def generate_launch_description():
     )
     
     spawn_entity = TimerAction(
-        period=2.0,
+        period=1.0,
         actions=[
             Node(
                 package="ros_gz_sim",
@@ -79,7 +79,7 @@ def generate_launch_description():
     )
     
     bridge = TimerAction(
-        period=3.0,
+        period=1.5,
         actions=[
             Node(
                 package="ros_gz_bridge",
@@ -95,7 +95,7 @@ def generate_launch_description():
     )
     
     thruster_mapper = TimerAction(
-        period=3.0,
+        period=1.5,
         actions=[
             Node(
                 package='auv_slam',
@@ -108,7 +108,7 @@ def generate_launch_description():
     )
     
     gate_detector = TimerAction(
-        period=5.0,
+        period=2.0,
         actions=[
             Node(
                 package='auv_slam',
@@ -121,7 +121,7 @@ def generate_launch_description():
     )
     
     gate_navigator = TimerAction(
-        period=5.0,
+        period=2.0,
         actions=[
             Node(
                 package='auv_slam',
@@ -134,7 +134,7 @@ def generate_launch_description():
     )
     
     debug_viewer = TimerAction(
-        period=8.0,
+        period=2.0,
         actions=[
             Node(
                 package='rqt_image_view',
