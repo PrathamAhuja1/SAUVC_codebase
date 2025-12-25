@@ -1,6 +1,4 @@
 # Bridge ROS 2 <> Gazebo Sim topics for AUV
-# FIXED VERSION - Uses cmd_vel for velocity control
-
 # Clock
 - ros_topic_name: "/clock"
   gz_topic_name: "/clock"
@@ -22,7 +20,22 @@
   gz_type_name: "ignition.msgs.Model"
   direction: GZ_TO_ROS
 
-# Cameras
+# ============================================
+# CRITICAL: Forward Camera for Gate Detection
+# ============================================
+- ros_topic_name: "/camera_forward/image_raw"
+  gz_topic_name: "/camera_forward/image_raw"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "ignition.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/camera_forward/camera_info"
+  gz_topic_name: "/camera_forward/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "ignition.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# Other Cameras
 - ros_topic_name: "/stereo_left"
   gz_topic_name: "/stereo_left"
   ros_type_name: "sensor_msgs/msg/Image"
@@ -47,20 +60,7 @@
   gz_type_name: "ignition.msgs.CameraInfo"
   direction: BIDIRECTIONAL
 
-# Forward camera
-- ros_topic_name: "/camera_forward/image_raw"
-  gz_topic_name: "/camera_forward/image_raw"
-  ros_type_name: "sensor_msgs/msg/Image"
-  gz_type_name: "ignition.msgs.Image"
-  direction: GZ_TO_ROS
-
-- ros_topic_name: "/camera_forward/camera_info"
-  gz_topic_name: "/camera_forward/camera_info"
-  ros_type_name: "sensor_msgs/msg/CameraInfo"
-  gz_type_name: "ignition.msgs.CameraInfo"
-  direction: GZ_TO_ROS
-
-# Ground Truth Odometry - FIXED TOPIC NAME
+# Ground Truth Odometry
 - ros_topic_name: "/ground_truth/odom"
   gz_topic_name: "/model/orca4_ign/odometry"
   ros_type_name: "nav_msgs/msg/Odometry"
@@ -79,11 +79,9 @@
   gz_type_name: "ignition.msgs.Pose_V"
   direction: GZ_TO_ROS
 
-# ============================================================
-# CRITICAL: Thruster Commands via VELOCITY control
-# ============================================================
-
-
+# ============================================
+# Thruster Commands
+# ============================================
 - ros_topic_name: "/thruster1_cmd"
   gz_topic_name: "/model/orca4_ign/joint/thruster1_joint/cmd_thrust"
   ros_type_name: "std_msgs/msg/Float64"

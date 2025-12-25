@@ -65,7 +65,7 @@
         
         <!-- Pool Floor at -1.5m depth -->
         <collision name="floor_collision">
-          <pose>0 0 -1.5 0 0 0</pose>
+          <pose>0 0 -2.0 0 0 0</pose>
           <geometry>
             <box>
               <size>15 8 0.1</size>
@@ -203,7 +203,7 @@
     <!-- ====================================================================== -->
     <model name="starting_marker">
       <static>true</static>
-      <pose>-2.0 0 -0.45 0 0 0</pose>
+      <pose>-4.5 0 -0.45 0 0 0</pose>
       <link name="marker_link">
         
         <!-- Yellow rectangular frame marker -->
