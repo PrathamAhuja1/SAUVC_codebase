@@ -67,8 +67,8 @@ def generate_launch_description():
                 arguments=[
                     "-name", "orca4_ign",
                     "-topic", "robot_description",
-                    "-z", "-1.5",
-                    "-x", "-1.0",
+                    "-z", "-0.5",
+                    "-x", "-2.0",
                     "-y", "0.0",
                     "-Y", "0.0",
                     "--ros-args", "--log-level", "warn"

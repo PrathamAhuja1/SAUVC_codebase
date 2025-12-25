@@ -8,47 +8,53 @@ from nav_msgs.msg import Odometry
 import time
 import math
 
-
 class SimpleGateNavigator(Node):
     def __init__(self):
         super().__init__('simple_gate_navigator')
         
+        # --- State Definitions ---
         self.SEARCHING = 0
         self.APPROACHING = 1
         self.ALIGNING = 2
         self.PASSING = 3
         self.COMPLETED = 4
         
+        # --- Config ---
         self.state = self.SEARCHING
+        self.mission_active = True
+        self.TARGET_DEPTH = -0.65  # Target depth in meters
         
+        # --- Navigation Variables ---
         self.gate_detected = False
-        self.alignment_error = 0.0
-        self.distance = 999.0
+        self.alignment_error = 0.0  # Range: -1.0 (Left) to 1.0 (Right)
+        self.distance = 999.0       # Estimated distance to gate
         self.current_position = None
         self.passing_start_x = None
         
+        # --- Thresholds & Speeds ---
         self.alignment_threshold = 0.10
         self.approach_distance = 2.0
         self.passing_distance = 0.8
         
-        self.search_speed = 0.3
-        self.approach_speed = 0.4
-        self.align_speed = 0.2
-        self.passing_speed = 0.6
-        
-        self.state_start_time = time.time()
-        
+        # --- Subscriptions ---
+        # Logic inputs from detector
         self.create_subscription(Bool, '/simple_gate/detected', self.gate_cb, 10)
         self.create_subscription(Float32, '/simple_gate/alignment_error', self.align_cb, 10)
         self.create_subscription(Float32, '/simple_gate/distance', self.dist_cb, 10)
+        
+        # Odometry (Use /odometry/filtered or /dvl/odom for real robot)
         self.create_subscription(Odometry, '/ground_truth/odom', self.odom_cb, 10)
         
+        # --- Publishers ---
+        # Velocity command (Twist)
         self.cmd_vel_pub = self.create_publisher(Twist, '/rp2040/cmd_vel', 10)
         
+        # Control Loop (20Hz)
         self.create_timer(0.05, self.control_loop)
         
-        self.get_logger().info('Simple Gate Navigator initialized')
+        self.get_logger().info('✅ Simple Gate Navigator Initialized')
     
+    # --- Callbacks ---
     def gate_cb(self, msg):
         self.gate_detected = msg.data
     
@@ -64,126 +70,111 @@ class SimpleGateNavigator(Node):
             msg.pose.pose.position.y,
             msg.pose.pose.position.z
         )
-    
-    def control_loop(self):
-        cmd = Twist()
-        
-        cmd.linear.z = self.depth_control(-1.5)
-        
-        if self.state == self.SEARCHING:
-            cmd = self.search_behavior(cmd)
-        elif self.state == self.APPROACHING:
-            cmd = self.approach_behavior(cmd)
-        elif self.state == self.ALIGNING:
-            cmd = self.align_behavior(cmd)
-        elif self.state == self.PASSING:
-            cmd = self.pass_behavior(cmd)
-        elif self.state == self.COMPLETED:
-            cmd.linear.x = 0.0
-            cmd.angular.z = 0.0
-        
-        self.cmd_vel_pub.publish(cmd)
-    
-    def depth_control(self, target_depth):
-        if not self.current_position:
+
+    # --- Helper Functions ---
+    def get_depth_velocity(self):
+        """
+        Calculates vertical velocity (z) to reach TARGET_DEPTH.
+        Returns float clamped between -0.5 and 0.5 m/s.
+        """
+        if self.current_position is None:
             return 0.0
-        
+
         current_depth = self.current_position[2]
-        depth_error = target_depth - current_depth
+        err = self.TARGET_DEPTH - current_depth
         
-        if abs(depth_error) < 0.2:
+        # Deadband to prevent jitter
+        if abs(err) < 0.05:
             return 0.0
+            
+        # P-gain of 1.5, Clamped to max 0.5 m/s safety limit
+        control_signal = err * 1.5
+        return max(-0.5, min(control_signal, 0.5))
+
+    # --- Main Control Loop ---
+    def control_loop(self):
+        """
+        Main control loop: Calculates Twist messages based on state
+        Publishes to /rp2040/cmd_vel
+        """
+        # Safety check: Stop if mission inactive or no odometry yet
+        if not self.mission_active or self.current_position is None:
+            self.cmd_vel_pub.publish(Twist())
+            return
+
+        # 1. Calculate Depth Hold (Always Active)
+        depth_cmd = self.get_depth_velocity()
         
-        z_cmd = depth_error * 1.0
-        return max(-0.5, min(z_cmd, 0.5))
-    
-    def search_behavior(self, cmd):
-        if self.gate_detected and self.distance < 999:
-            self.get_logger().info(f'Gate detected at {self.distance:.2f}m')
-            self.transition_to(self.APPROACHING)
-            return cmd
-        
-        cmd.linear.x = self.search_speed
-        cmd.angular.z = 0.2
-        
-        return cmd
-    
-    def approach_behavior(self, cmd):
-        if not self.gate_detected:
-            self.get_logger().warn('Gate lost')
-            self.transition_to(self.SEARCHING)
-            return cmd
-        
-        if self.distance <= self.approach_distance:
-            self.get_logger().info('Close enough, aligning')
-            self.transition_to(self.ALIGNING)
-            return cmd
-        
-        cmd.linear.x = self.approach_speed
-        cmd.angular.z = -self.alignment_error * 1.5
-        
-        return cmd
-    
-    def align_behavior(self, cmd):
-        if not self.gate_detected:
-            self.get_logger().warn('Gate lost during alignment')
-            self.transition_to(self.SEARCHING)
-            return cmd
-        
-        elapsed = time.time() - self.state_start_time
-        
-        if abs(self.alignment_error) < self.alignment_threshold:
-            if self.distance <= self.passing_distance:
-                self.get_logger().info('Aligned, passing through')
-                self.passing_start_x = self.current_position[0] if self.current_position else 0
-                self.transition_to(self.PASSING)
-                return cmd
-        
-        if elapsed > 15.0:
-            self.get_logger().warn('Alignment timeout, proceeding anyway')
-            self.passing_start_x = self.current_position[0] if self.current_position else 0
-            self.transition_to(self.PASSING)
-            return cmd
-        
-        if abs(self.alignment_error) > 0.15:
-            cmd.linear.x = 0.0
-            cmd.angular.z = -self.alignment_error * 3.0
-        else:
-            cmd.linear.x = self.align_speed
-            cmd.angular.z = -self.alignment_error * 2.0
-        
-        return cmd
-    
-    def pass_behavior(self, cmd):
-        if self.current_position and self.passing_start_x is not None:
+        msg = Twist()
+        msg.linear.z = float(depth_cmd)
+
+        # 2. State Machine Logic
+        if self.state == self.SEARCHING:
+            # BEHAVIOR: Move forward slowly to find the gate
+            msg.linear.x = 0.2  
+            msg.angular.z = 0.0 
+            
+            if self.gate_detected:
+                self.get_logger().info("Gate Detected! -> APPROACHING")
+                self.state = self.APPROACHING
+
+        elif self.state == self.APPROACHING:
+            # BEHAVIOR: Move forward and keep the gate centered
+            if not self.gate_detected:
+                # If lost, go back to search
+                self.state = self.SEARCHING
+            else:
+                msg.linear.x = 0.3
+                
+                # Yaw Control: Turn opposite to error to center image
+                # alignment_error is -1.0 (Left) to 1.0 (Right)
+                # To correct +Error (Right), turn Right (-Yaw)
+                msg.angular.z = -1.0 * self.alignment_error
+                
+                # Transition to ALIGNING if we get close
+                if self.distance < self.approach_distance:
+                    self.get_logger().info("Close to Gate -> ALIGNING")
+                    self.state = self.ALIGNING
+
+        elif self.state == self.ALIGNING:
+            # BEHAVIOR: Slower speed, precision alignment
+            if not self.gate_detected:
+                self.state = self.SEARCHING
+            else:
+                msg.linear.x = 0.15
+                msg.angular.z = -1.5 * self.alignment_error
+                
+                # Transition to PASSING if very close and well aligned
+                if self.distance < 1.2 and abs(self.alignment_error) < self.alignment_threshold:
+                    self.get_logger().info("Aligned & Close -> PASSING")
+                    self.passing_start_x = self.current_position[0]
+                    self.state = self.PASSING
+
+        elif self.state == self.PASSING:
+            # BEHAVIOR: Blind forward surge to clear the gate
+            if self.passing_start_x is None:
+                self.passing_start_x = self.current_position[0]
+            
             distance_traveled = abs(self.current_position[0] - self.passing_start_x)
             
-            if distance_traveled > 2.5:
-                self.get_logger().info('Gate passed successfully')
-                self.transition_to(self.COMPLETED)
-                return cmd
-        
-        cmd.linear.x = self.passing_speed
-        cmd.angular.z = 0.0
-        
-        return cmd
-    
-    def transition_to(self, new_state):
-        state_names = {
-            self.SEARCHING: 'SEARCHING',
-            self.APPROACHING: 'APPROACHING',
-            self.ALIGNING: 'ALIGNING',
-            self.PASSING: 'PASSING',
-            self.COMPLETED: 'COMPLETED'
-        }
-        
-        old_name = state_names[self.state]
-        self.state = new_state
-        self.state_start_time = time.time()
-        new_name = state_names[self.state]
-        
-        self.get_logger().info(f'{old_name} -> {new_name}')
+            # Surge forward fast, lock heading
+            msg.linear.x = 0.8
+            msg.angular.z = 0.0 
+            
+            # Drive 3 meters past the start of the pass
+            if distance_traveled > 3.0: 
+                self.get_logger().info('✅ Gate Passed! Stopping.')
+                self.state = self.COMPLETED
+                self.mission_active = False
 
+        elif self.state == self.COMPLETED:
+            # Stop everything
+            msg.linear.x = 0.0
+            msg.angular.z = 0.0
+            msg.linear.z = 0.0
+
+        # 3. Publish Command
+        self.cmd_vel_pub.publish(msg)
 
 def main(args=None):
     rclpy.init(args=args)
@@ -194,11 +185,11 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        cmd = Twist()
-        node.cmd_vel_pub.publish(cmd)
+        # Stop robot on exit
+        stop_msg = Twist()
+        node.cmd_vel_pub.publish(stop_msg)
         node.destroy_node()
         rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()

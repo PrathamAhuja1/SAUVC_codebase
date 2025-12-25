@@ -5,6 +5,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Bool, Float32
 from geometry_msgs.msg import Point
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from cv_bridge import CvBridge
 import cv2
 import numpy as np
@@ -22,9 +23,15 @@ class SimpleGateDetector(Node):
         
         self.min_contour_area = 1000
         self.detection_history = deque(maxlen=3)
+        qos_profile = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10
+        )
         
         self.image_sub = self.create_subscription(
-            Image, '/camera_forward/image_raw', self.image_callback, 1)
+            Image, '/camera_forward/image_raw', self.image_callback, qos_profile)
+            
         self.cam_info_sub = self.create_subscription(
             CameraInfo, '/camera_forward/camera_info', self.cam_info_callback, 10)
         
@@ -59,7 +66,7 @@ class SimpleGateDetector(Node):
         debug_img = cv_image.copy()
         h, w = cv_image.shape[:2]
         
-        _, binary = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         
         kernel = np.ones((5, 5), np.uint8)
         binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
