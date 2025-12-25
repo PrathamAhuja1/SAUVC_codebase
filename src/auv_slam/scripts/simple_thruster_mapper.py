@@ -35,17 +35,16 @@ class SimpleThrusterMapper(Node):
         Direct mapping of Twist commands to thrusters
         
         BlueROV2 Configuration:
-              FRONT
-           T1      T2
-             \  /
-              \/
-              /\
-             /  \
-           T3      T4
-              BACK
+            FRONT
+        T1      T2
+            \  /
+            \/
+            /\
+            /  \
+        T3      T4
+            BACK
         
         T5 (front vertical), T6 (back vertical) - point DOWN
-
         """
         surge = msg.linear.x
         sway = msg.linear.y 
@@ -56,25 +55,21 @@ class SimpleThrusterMapper(Node):
         cos45 = 0.7071
 
         t1 = cos45 * (surge + sway) - yaw * 2.0
-
         t2 = cos45 * (surge - sway) + yaw * 2.0
-
         t3 = cos45 * (-surge + sway) + yaw * 2.0
-
         t4 = cos45 * (-surge - sway) - yaw * 2.0
         
-
-        t5 = -heave * 2.5  # Front vertical
-        t6 = -heave * 2.5  # Back vertical
+        # FIXED: Remove negation for downward-pointing thrusters
+        # Positive heave command (go up) -> positive thrust on downward thruster -> push up
+        # Negative heave command (go down) -> negative thrust on downward thruster -> pull down
+        t5 = heave * 2.5  # CHANGED: removed negative sign
+        t6 = heave * 2.5  # CHANGED: removed negative sign
         
         # Apply limits and publish
         thrusts = [t1, t2, t3, t4, t5, t6]
         
         for i, thrust in enumerate(thrusts):
-            # Clamp to max thrust
             thrust = max(-self.max_thrust, min(thrust, self.max_thrust))
-            
-            # Publish
             msg = Float64()
             msg.data = float(thrust)
             self.thruster_pubs[i].publish(msg)
