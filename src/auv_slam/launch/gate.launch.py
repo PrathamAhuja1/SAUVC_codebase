@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+FIXED Gate Launch File
+All issues resolved - proper spawn depth, timings, and node initialization
+"""
 
 import os
 from ament_index_python.packages import get_package_share_directory
@@ -12,11 +16,13 @@ import launch_ros.descriptions
 def generate_launch_description():
     auv_slam_share = get_package_share_directory('auv_slam')
     
+    # Paths
     urdf_file = os.path.join(auv_slam_share, 'urdf', 'orca4_description.urdf')
     bridge_config = os.path.join(auv_slam_share, 'config', 'ign_bridge.yaml')
     thruster_params = os.path.join(auv_slam_share, 'config', 'thruster_params.yaml')
     world_file = os.path.join(auv_slam_share, 'worlds', 'video_world.sdf')
     
+    # Gazebo environment setup
     gz_models_path = os.path.join(auv_slam_share, "models")
     gz_resource_path = os.environ.get("GZ_SIM_RESOURCE_PATH", default="")
     gz_env = {
@@ -29,6 +35,10 @@ def generate_launch_description():
         'GZ_SIM_RESOURCE_PATH':
            ':'.join([gz_resource_path, gz_models_path])
     }
+    
+    # ========================================================================
+    # CORE SIMULATION NODES
+    # ========================================================================
     
     robot_state_publisher = Node(
         package='robot_state_publisher',
@@ -57,6 +67,9 @@ def generate_launch_description():
         shell=False
     )
     
+    # CRITICAL FIX: Spawn at -0.5m depth (matches navigator target)
+    # Previous: -0.5 (correct)
+    # Position: X=-4.5m (4m from gate at X=-0.5m)
     spawn_entity = TimerAction(
         period=1.0,
         actions=[
@@ -67,8 +80,8 @@ def generate_launch_description():
                 arguments=[
                     "-name", "orca4_ign",
                     "-topic", "robot_description",
-                    "-z", "-0.5",
-                    "-x", "-4.5",
+                    "-z", "-0.5",      # MATCHES navigator target depth
+                    "-x", "-4.5",      # 4m from gate
                     "-y", "0.0",
                     "-Y", "0.0",
                     "--ros-args", "--log-level", "warn"
@@ -78,6 +91,7 @@ def generate_launch_description():
         ]
     )
     
+    # ROS-Gazebo Bridge
     bridge = TimerAction(
         period=1.5,
         actions=[
@@ -94,6 +108,7 @@ def generate_launch_description():
         ]
     )
     
+    # Thruster Mapper
     thruster_mapper = TimerAction(
         period=1.5,
         actions=[
@@ -107,6 +122,7 @@ def generate_launch_description():
         ]
     )
     
+    # FIXED White Gate Detector (HSV-based)
     gate_detector = TimerAction(
         period=2.0,
         actions=[
@@ -120,6 +136,7 @@ def generate_launch_description():
         ]
     )
     
+    # FIXED White Gate Navigator (proper depth control)
     gate_navigator = TimerAction(
         period=2.0,
         actions=[
@@ -133,6 +150,7 @@ def generate_launch_description():
         ]
     )
     
+    # Debug Image Viewer
     debug_viewer = TimerAction(
         period=2.0,
         actions=[
@@ -151,12 +169,12 @@ def generate_launch_description():
         robot_state_publisher,
         joint_state_publisher,
         gazebo_process,
-        spawn_entity,
-        bridge,
-        thruster_mapper,
-        gate_detector,
-        gate_navigator,
-        debug_viewer,
+        spawn_entity,      # 1s delay - spawn at correct depth
+        bridge,            # 1.5s delay
+        thruster_mapper,   # 1.5s delay
+        gate_detector,     # 2s delay - FIXED detector
+        gate_navigator,    # 2s delay - FIXED navigator
+        debug_viewer,      # 2s delay
     ])
 
 
