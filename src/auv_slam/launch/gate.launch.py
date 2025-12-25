@@ -15,7 +15,7 @@ def generate_launch_description():
     urdf_file = os.path.join(auv_slam_share, 'urdf', 'orca4_description.urdf')
     bridge_config = os.path.join(auv_slam_share, 'config', 'ign_bridge.yaml')
     thruster_params = os.path.join(auv_slam_share, 'config', 'thruster_params.yaml')
-    world_file = os.path.join(auv_slam_share, 'worlds', 'simple_gate_world.sdf')
+    world_file = os.path.join(auv_slam_share, 'worlds', 'video_world.sdf')
     
     gz_models_path = os.path.join(auv_slam_share, "models")
     gz_resource_path = os.environ.get("GZ_SIM_RESOURCE_PATH", default="")
