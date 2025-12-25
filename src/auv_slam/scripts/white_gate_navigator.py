@@ -105,7 +105,7 @@ class FixedGateNavigator(Node):
             return 0.0
         
         # P-control with clamping
-        control_signal = depth_error * 1.5  # Slightly reduced gain
+        control_signal = depth_error * -1.5  # Slightly reduced gain
         
         # Safety clamp
         return max(-0.5, min(control_signal, 0.5))
@@ -289,7 +289,7 @@ class FixedGateNavigator(Node):
             # Keep depth
             depth_error = self.TARGET_DEPTH - self.current_depth
             if abs(depth_error) > 0.15:
-                msg.linear.z = depth_error * 0.5
+                msg.linear.z = depth_error * -0.5
                 msg.linear.z = max(-0.4, min(msg.linear.z, 0.4))
             else:
                 msg.linear.z = 0.0

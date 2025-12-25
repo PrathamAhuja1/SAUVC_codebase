@@ -59,11 +59,9 @@ class SimpleThrusterMapper(Node):
         t3 = cos45 * (-surge + sway) + yaw * 2.0
         t4 = cos45 * (-surge - sway) - yaw * 2.0
         
-        # FIXED: Remove negation for downward-pointing thrusters
-        # Positive heave command (go up) -> positive thrust on downward thruster -> push up
-        # Negative heave command (go down) -> negative thrust on downward thruster -> pull down
-        t5 = heave * 2.5  # CHANGED: removed negative sign
-        t6 = heave * 2.5  # CHANGED: removed negative sign
+
+        t5 = -heave * 2.5  # CHANGED: removed negative sign
+        t6 = -heave * 2.5  # CHANGED: removed negative sign
         
         # Apply limits and publish
         thrusts = [t1, t2, t3, t4, t5, t6]

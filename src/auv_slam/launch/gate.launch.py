@@ -67,9 +67,7 @@ def generate_launch_description():
         shell=False
     )
     
-    # CRITICAL FIX: Spawn at -0.5m depth (matches navigator target)
-    # Previous: -0.5 (correct)
-    # Position: X=-4.5m (4m from gate at X=-0.5m)
+
     spawn_entity = TimerAction(
         period=1.0,
         actions=[
@@ -80,7 +78,7 @@ def generate_launch_description():
                 arguments=[
                     "-name", "orca4_ign",
                     "-topic", "robot_description",
-                    "-z", "-0.5",      # MATCHES navigator target depth
+                    "-z", "0.2",       # Start at surface, will descend to -0.5m
                     "-x", "-4.5",      # 4m from gate
                     "-y", "0.0",
                     "-Y", "0.0",
