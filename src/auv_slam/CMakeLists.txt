@@ -40,7 +40,10 @@ install(PROGRAMS
   scripts/demo.py
   scripts/prompt_flare_order.py
   scripts/white_gate_detector.py
+  scripts/thruster8_mapper.py
   scripts/white_gate_navigator.py
+  scripts/pwm8_mapper.py
+  scripts/pwm6_mapper.py
   DESTINATION lib/${PROJECT_NAME})
 
 
